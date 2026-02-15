@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Money Tracker Pro</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- AUTH -->
+<div id="auth">
+  <h1>💰 Money Tracker Pro</h1>
+  <input id="email" placeholder="Email">
+  <input id="password" type="password" placeholder="Password">
+  <button onclick="register()">Register</button>
+  <button onclick="login()">Login</button>
+</div>
+
+<!-- APP -->
+<div id="app" style="display:none;">
+
+  <!-- DASHBOARD -->
+  <div class="header">
+    <h2>Dashboard</h2>
+  </div>
+
+  <div class="cards">
+    <div class="card income">💵 <span id="income">0</span></div>
+    <div class="card expense">💸 <span id="expense">0</span></div>
+    <div class="card profit">📈 <span id="profit">0</span></div>
+  </div>
+
+  <!-- TRANSACTIONS -->
+  <div id="transactions"></div>
+
+  <!-- ADD MODAL -->
+  <div id="modal" class="modal">
+    <div class="modal-content">
+      <h3>Add Transaction</h3>
+
+      <select id="type">
+        <option value="income">Income</option>
+        <option value="expense">Expense</option>
+      </select>
+
+      <input id="amount" placeholder="Amount">
+      <input id="category" placeholder="Category (Food, Rent)">
+      <input id="source" placeholder="Source (Job, Business)">
+
+      <button onclick="addTransaction()">Save</button>
+      <button onclick="closeModal()">Cancel</button>
+    </div>
+  </div>
+
+  <!-- FLOAT BUTTON -->
+  <button class="fab" onclick="openModal()">+</button>
+
+  <!-- NAVBAR -->
+  <div class="nav">
+    <button onclick="loadTransactions()">🏠</button>
+    <button onclick="logout()">🚪</button>
+  </div>
+
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+
+
+<script src="app.js"></script>
+</body>
+</html>
