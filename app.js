@@ -1,5 +1,3 @@
-
-
 const firebaseConfig = {
   apiKey: "AIzaSyA6D-Go72dsfPi2MLzMFPx4TbONS201bjk",
   authDomain: "data-tracker-b87a5.firebaseapp.com",
@@ -13,7 +11,7 @@ const db = firebase.firestore();
 
 let currentUser = null;
 
-// ✅ GET ELEMENTS (VERY IMPORTANT FIX)
+// ELEMENTS
 const email = document.getElementById("email");
 const password = document.getElementById("password");
 const modal = document.getElementById("modal");
@@ -22,27 +20,17 @@ const income = document.getElementById("income");
 const expense = document.getElementById("expense");
 const profit = document.getElementById("profit");
 
-// ✅ AUTH FUNCTIONS (MAKE GLOBAL)
-window.register = function () {
-  auth.createUserWithEmailAndPassword(email.value, password.value);
-};
+// AUTH
+window.register = () => auth.createUserWithEmailAndPassword(email.value, password.value);
+window.login = () => auth.signInWithEmailAndPassword(email.value, password.value);
+window.logout = () => auth.signOut();
 
-window.login = function () {
-  auth.signInWithEmailAndPassword(email.value, password.value);
-};
-
-window.logout = function () {
-  auth.signOut();
-};
-
-// ✅ STATE
+// STATE
 auth.onAuthStateChanged(user => {
   if (user) {
     currentUser = user.uid;
-
     document.getElementById("auth").style.display = "none";
     document.getElementById("app").style.display = "block";
-
     loadTransactions();
   } else {
     document.getElementById("auth").style.display = "block";
@@ -50,24 +38,19 @@ auth.onAuthStateChanged(user => {
   }
 });
 
-// ✅ MODAL
-window.openModal = function () {
-  modal.style.display = "block";
-};
+// MODAL
+window.openModal = () => modal.style.display = "block";
+window.closeModal = () => modal.style.display = "none";
 
-window.closeModal = function () {
-  modal.style.display = "none";
-};
-
-// ✅ ADD TRANSACTION
-window.addTransaction = function () {
+// ADD TRANSACTION
+window.addTransaction = () => {
   if (!currentUser) return alert("Login first");
 
   db.collection("transactions").add({
-    type: document.getElementById("type").value,
-    amount: Number(document.getElementById("amount").value),
-    category: document.getElementById("category").value,
-    source: document.getElementById("source").value,
+    type: type.value,
+    amount: Number(amount.value),
+    category: category.value,
+    source: source.value,
     userId: currentUser,
     time: Date.now()
   }).then(() => {
@@ -76,8 +59,8 @@ window.addTransaction = function () {
   });
 };
 
-// ✅ LOAD DATA
-window.loadTransactions = function () {
+// LOAD DATA
+window.loadTransactions = () => {
   transactions.innerHTML = "";
 
   let totalIncome = 0;
@@ -90,15 +73,14 @@ window.loadTransactions = function () {
       snapshot.forEach(doc => {
         let data = doc.data();
 
-        if (data.type === "income") totalIncome += data.amount;
-        else totalExpense += data.amount;
+        if (data.type === "income") totalIncome += data.amount || 0;
+        else totalExpense += data.amount || 0;
 
         let div = document.createElement("div");
         div.innerHTML = `
-          <b>${data.type.toUpperCase()}</b> - $${data.amount}<br>
-          ${data.category} | ${data.source}
+          <b>${(data.type || "").toUpperCase()}</b> - $${data.amount || 0}<br>
+          ${data.category || "-"} | ${data.source || "-"}
         `;
-
         transactions.appendChild(div);
       });
 
@@ -108,7 +90,7 @@ window.loadTransactions = function () {
     });
 };
 
-// ✅ EXPORT PDF (GLOBAL)
+// EXPORT PDF
 window.exportPDF = async function () {
 
   const { jsPDF } = window.jspdf;
@@ -137,19 +119,16 @@ window.exportPDF = async function () {
   snapshot.forEach(doc => {
     const data = doc.data();
 
-    // ✅ FIXED FILTER (safe for old + new data)
+    // SAFE FILTER
     if (startDate) {
       if (data.time) {
         if (data.time < startDate || data.time > endDate) return;
       }
-      // if no time → still include
     }
 
-    // ✅ totals
     if (data.type === "income") totalIncome += data.amount || 0;
     else totalExpense += data.amount || 0;
 
-    // ✅ ALWAYS add row safely
     rows += `
       <tr>
         <td>${data.type || "-"}</td>
@@ -160,7 +139,6 @@ window.exportPDF = async function () {
     `;
   });
 
-  // ✅ empty state
   if (!rows) {
     rows = `
       <tr>
@@ -173,7 +151,7 @@ window.exportPDF = async function () {
 
   let profit = totalIncome - totalExpense;
 
-  // 🎨 PREMIUM HTML
+  // HTML REPORT
   container.innerHTML = `
     <div style="font-family:'Noto Sans Khmer',sans-serif; padding:20px;">
       
@@ -195,12 +173,11 @@ window.exportPDF = async function () {
         </div>
       </div>
 
-      <!-- 📊 CHART -->
       <canvas id="reportChart" style="width:100%; height:200px;"></canvas>
 
       <br>
 
-      <table style="width:100%;border-collapse:collapse;">
+      <table style="width:100%;border-collapse:collapse;font-size:14px;">
         <tr style="background:#eee;">
           <th style="padding:8px;">Type</th>
           <th>Amount</th>
@@ -215,7 +192,7 @@ window.exportPDF = async function () {
 
   container.style.display = "block";
 
-  // 📊 CREATE CHART
+  // CREATE CHART
   const ctx = document.getElementById("reportChart").getContext("2d");
 
   new Chart(ctx, {
@@ -234,12 +211,16 @@ window.exportPDF = async function () {
     }
   });
 
-  // ✅ FIX: wait longer + force render (mobile fix)
-  await new Promise(resolve => setTimeout(resolve, 1000));
+  // 🔥 FIX: FORCE FULL RENDER (CRITICAL)
+  await new Promise(resolve => setTimeout(resolve, 1500));
   await new Promise(requestAnimationFrame);
 
-  // 📸 CAPTURE
-  const canvas = await html2canvas(container);
+  // CAPTURE
+  const canvas = await html2canvas(container, {
+    scale: 2,
+    useCORS: true
+  });
+
   const imgData = canvas.toDataURL("image/png");
 
   const doc = new jsPDF("p", "mm", "a4");
@@ -249,10 +230,3 @@ window.exportPDF = async function () {
 
   container.style.display = "none";
 };
-
-
-
-
-
-
-
