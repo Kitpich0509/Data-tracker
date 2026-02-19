@@ -154,6 +154,16 @@ window.exportPDF = async function () {
     `;
   });
 
+  if (!rows) {
+  rows = `
+    <tr>
+      <td colspan="4" style="text-align:center;padding:10px;">
+        No data for this month
+      </td>
+    </tr>
+  `;
+}
+
   let profit = totalIncome - totalExpense;
 
   // 🎨 PREMIUM HTML
@@ -231,6 +241,7 @@ window.exportPDF = async function () {
 
   container.style.display = "none";
 };
+
 
 
 
