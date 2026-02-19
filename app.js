@@ -137,9 +137,7 @@ window.exportPDF = async function () {
   snapshot.forEach(doc => {
     const data = doc.data();
 
-    if (startDate) {
-  if (!data.time) return;
-
+    if (startDate && data.time) {
   if (data.time < startDate || data.time > endDate) return;
 }
 
@@ -233,6 +231,7 @@ window.exportPDF = async function () {
 
   container.style.display = "none";
 };
+
 
 
 
