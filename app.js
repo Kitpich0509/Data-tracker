@@ -137,32 +137,39 @@ window.exportPDF = async function () {
   snapshot.forEach(doc => {
     const data = doc.data();
 
-    if (startDate && data.time) {
-  if (data.time < startDate || data.time > endDate) return;
-}
+    // ✅ FIXED FILTER (safe for old + new data)
+    if (startDate) {
+      if (data.time) {
+        if (data.time < startDate || data.time > endDate) return;
+      }
+      // if no time → still include
+    }
 
-    if (data.type === "income") totalIncome += data.amount;
-    else totalExpense += data.amount;
+    // ✅ totals
+    if (data.type === "income") totalIncome += data.amount || 0;
+    else totalExpense += data.amount || 0;
 
+    // ✅ ALWAYS add row safely
     rows += `
       <tr>
-        <td>${data.type}</td>
-        <td>$${data.amount}</td>
+        <td>${data.type || "-"}</td>
+        <td>$${data.amount || 0}</td>
         <td>${data.category || "-"}</td>
         <td>${data.source || "-"}</td>
       </tr>
     `;
   });
 
+  // ✅ empty state
   if (!rows) {
-  rows = `
-    <tr>
-      <td colspan="4" style="text-align:center;padding:10px;">
-        No data for this month
-      </td>
-    </tr>
-  `;
-}
+    rows = `
+      <tr>
+        <td colspan="4" style="text-align:center;padding:15px;color:#888;">
+          📭 No transactions found
+        </td>
+      </tr>
+    `;
+  }
 
   let profit = totalIncome - totalExpense;
 
@@ -227,8 +234,9 @@ window.exportPDF = async function () {
     }
   });
 
-  // ⏳ WAIT chart render
-  await new Promise(resolve => setTimeout(resolve, 500));
+  // ✅ FIX: wait longer + force render (mobile fix)
+  await new Promise(resolve => setTimeout(resolve, 1000));
+  await new Promise(requestAnimationFrame);
 
   // 📸 CAPTURE
   const canvas = await html2canvas(container);
