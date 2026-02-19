@@ -137,7 +137,11 @@ window.exportPDF = async function () {
   snapshot.forEach(doc => {
     const data = doc.data();
 
-    if (startDate && (data.time < startDate || data.time > endDate)) return;
+    if (startDate) {
+  if (!data.time) return;
+
+  if (data.time < startDate || data.time > endDate) return;
+}
 
     if (data.type === "income") totalIncome += data.amount;
     else totalExpense += data.amount;
@@ -229,6 +233,7 @@ window.exportPDF = async function () {
 
   container.style.display = "none";
 };
+
 
 
 
