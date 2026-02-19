@@ -20,6 +20,13 @@ const income = document.getElementById("income");
 const expense = document.getElementById("expense");
 const profit = document.getElementById("profit");
 
+// 🔥 CLEAN FUNCTION (IMPORTANT FIX)
+const clean = (text) => {
+  return String(text || "")
+    .replace(/"/g, "")
+    .trim();
+};
+
 // AUTH
 window.register = () => auth.createUserWithEmailAndPassword(email.value, password.value);
 window.login = () => auth.signInWithEmailAndPassword(email.value, password.value);
@@ -42,15 +49,15 @@ auth.onAuthStateChanged(user => {
 window.openModal = () => modal.style.display = "block";
 window.closeModal = () => modal.style.display = "none";
 
-// ADD TRANSACTION
+// ADD TRANSACTION (CLEAN DATA)
 window.addTransaction = () => {
   if (!currentUser) return alert("Login first");
 
   db.collection("transactions").add({
-    type: type.value,
-    amount: Number(amount.value),
-    category: category.value,
-    source: source.value,
+    type: clean(type.value),
+    amount: Number(amount.value) || 0,
+    category: clean(category.value),
+    source: clean(source.value),
     userId: currentUser,
     time: Date.now()
   }).then(() => {
@@ -73,13 +80,13 @@ window.loadTransactions = () => {
       snapshot.forEach(doc => {
         let data = doc.data();
 
-        if (data.type === "income") totalIncome += data.amount || 0;
+        if (clean(data.type) === "income") totalIncome += data.amount || 0;
         else totalExpense += data.amount || 0;
 
         let div = document.createElement("div");
         div.innerHTML = `
-          <b>${(data.type || "").toUpperCase()}</b> - $${data.amount || 0}<br>
-          ${data.category || "-"} | ${data.source || "-"}
+          <b>${clean(data.type).toUpperCase()}</b> - $${data.amount || 0}<br>
+          ${clean(data.category)} | ${clean(data.source)}
         `;
         transactions.appendChild(div);
       });
@@ -116,29 +123,29 @@ window.exportPDF = async function () {
   let totalExpense = 0;
   let rows = "";
 
-  snapshot.forEach(doc => {
-    const data = doc.data();
+  const docs = snapshot.docs.map(doc => doc.data());
+
+  docs.forEach(data => {
 
     // SAFE FILTER
-    if (startDate) {
-      if (data.time) {
-        if (data.time < startDate || data.time > endDate) return;
-      }
+    if (startDate && data.time) {
+      if (data.time < startDate || data.time > endDate) return;
     }
 
-    if (data.type === "income") totalIncome += data.amount || 0;
+    if (clean(data.type) === "income") totalIncome += data.amount || 0;
     else totalExpense += data.amount || 0;
 
     rows += `
       <tr>
-        <td>${data.type || "-"}</td>
+        <td>${clean(data.type)}</td>
         <td>$${data.amount || 0}</td>
-        <td>${data.category || "-"}</td>
-        <td>${data.source || "-"}</td>
+        <td>${clean(data.category)}</td>
+        <td>${clean(data.source)}</td>
       </tr>
     `;
   });
 
+  // EMPTY STATE
   if (!rows) {
     rows = `
       <tr>
@@ -192,7 +199,7 @@ window.exportPDF = async function () {
 
   container.style.display = "block";
 
-  // CREATE CHART
+  // CHART
   const ctx = document.getElementById("reportChart").getContext("2d");
 
   new Chart(ctx, {
@@ -211,11 +218,10 @@ window.exportPDF = async function () {
     }
   });
 
-  // 🔥 FIX: FORCE FULL RENDER (CRITICAL)
+  // 🔥 CRITICAL FIX (mobile render)
   await new Promise(resolve => setTimeout(resolve, 1500));
   await new Promise(requestAnimationFrame);
 
-  // CAPTURE
   const canvas = await html2canvas(container, {
     scale: 2,
     useCORS: true
